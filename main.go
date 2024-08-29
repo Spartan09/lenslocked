@@ -3,32 +3,23 @@ package main
 import (
     "fmt"
     "github.com/Spartan09/lenslocked/controllers"
+    "github.com/Spartan09/lenslocked/templates"
     "github.com/Spartan09/lenslocked/views"
     "github.com/go-chi/chi/v5"
     "net/http"
-    "path/filepath"
 )
 
 func main() {
     r := chi.NewRouter()
 
-    tpl, err := views.Parse(filepath.Join("templates", "home.gohtml"))
-    if err != nil {
-        panic(err)
-    }
-    r.Get("/", controllers.StaticHandler(tpl))
-
-    tpl, err = views.Parse(filepath.Join("templates", "contact.gohtml"))
-    if err != nil {
-        panic(err)
-    }
-    r.Get("/contact", controllers.StaticHandler(tpl))
-
-    tpl, err = views.Parse(filepath.Join("templates", "faq.gohtml"))
-    if err != nil {
-        panic(err)
-    }
-    r.Get("/faq", controllers.StaticHandler(tpl))
+    r.Get("/", controllers.StaticHandler(views.Must(
+        views.ParseFS(templates.FS, "home.gohtml", "tailwind.gohtml"))))
+    r.Get("/contact", controllers.StaticHandler(views.Must(
+        views.ParseFS(templates.FS, "contact.gohtml", "tailwind.gohtml"))))
+    r.Get("/faq", controllers.FAQ(
+        views.Must(views.ParseFS(templates.FS, "faq.gohtml", "tailwind.gohtml"))))
+    r.Get("/signup", controllers.StaticHandler(views.Must(
+        views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))))
 
     r.NotFound(func(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Page not found", http.StatusNotFound)

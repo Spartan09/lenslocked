@@ -2,36 +2,28 @@ package main
 
 import (
     "errors"
-    "log"
+    "fmt"
 )
 
-func Connect() error {
-    // try to connect
-    // pretend we got an error
-    return errors.New("connection failed")
-}
-func CreateUser() error {
-    err := Connect()
-    if err != nil {
-        return err
+func main() {
+    err := B()
+    // TODO: Determine if the `err` variable is an `ErrNotFound`
+    if errors.Is(err, ErrNotFound) {
+        fmt.Printf("Error is %v\n", err)
+    } else {
+        fmt.Printf("Error is not %v\n", err)
     }
-    return nil
-}
-func CreateOrg() error {
-    err := CreateUser()
-    if err != nil {
-        return err
-    }
-    return nil
 }
 
-func main() {
-    err := CreateUser()
+var ErrNotFound = errors.New("not found")
+
+func A() error {
+    return ErrNotFound
+}
+func B() error {
+    err := A()
     if err != nil {
-        log.Println(err)
+        return fmt.Errorf("b: %w", err)
     }
-    err = CreateOrg()
-    if err != nil {
-        log.Println(err)
-    }
+    return nil
 }
