@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # Our Postgres database
     db: # The service will be named db.
