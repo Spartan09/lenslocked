@@ -1,29 +1,29 @@
 package main
 
 import (
-    "errors"
     "fmt"
+    "github.com/Spartan09/lenslocked/models"
 )
 
 func main() {
-    err := B()
-    // TODO: Determine if the `err` variable is an `ErrNotFound`
-    if errors.Is(err, ErrNotFound) {
-        fmt.Printf("Error is %v\n", err)
-    } else {
-        fmt.Printf("Error is not %v\n", err)
-    }
-}
 
-var ErrNotFound = errors.New("not found")
-
-func A() error {
-    return ErrNotFound
-}
-func B() error {
-    err := A()
+    cfg := models.DefaultPostgresConfig()
+    db, err := models.Open(cfg)
     if err != nil {
-        return fmt.Errorf("b: %w", err)
+        panic(err)
     }
-    return nil
+    defer db.Close()
+    err = db.Ping()
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println("Connected!")
+    us := models.UserService{
+        DB: db,
+    }
+    user, err := us.Create("bob@bob.com", "bob123")
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(user)
 }
