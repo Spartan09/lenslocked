@@ -3,9 +3,11 @@ package main
 import (
     "fmt"
     "github.com/Spartan09/lenslocked/controllers"
+    "github.com/Spartan09/lenslocked/models"
     "github.com/Spartan09/lenslocked/templates"
     "github.com/Spartan09/lenslocked/views"
     "github.com/go-chi/chi/v5"
+    "github.com/gorilla/csrf"
     "net/http"
 )
 
@@ -33,12 +35,23 @@ func main() {
         UserService: &userService,
     }
     usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
+    usersC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "signin.gohtml", "tailwind.gohtml"))
     r.Get("/users/new", usersC.New)
     r.Post("/users", usersC.Create)
+    r.Get("/signin", usersC.SignIn)
+    r.Post("/signin", usersC.ProcessSignIn)
 
     r.NotFound(func(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Page not found", http.StatusNotFound)
     })
+
+    r.Get("/users/me", usersC.CurrentUser)
+
+    csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+    csrfMw := csrf.Protect(
+        []byte(csrfKey),
+        csrf.Secure(false))
+
     fmt.Println("Starting the server on :3000...")
-    http.ListenAndServe(":3000", r)
+    http.ListenAndServe(":3000", csrfMw(r))
 }
