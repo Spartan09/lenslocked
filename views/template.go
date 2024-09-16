@@ -65,5 +65,5 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		http.Error(w, "There was an error executing the template.", http.StatusInternalServerError)
 		return
 	}
-	io.Copy(w, &buf)
+	_, _ = io.Copy(w, &buf)
 }
