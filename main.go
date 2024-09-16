@@ -47,10 +47,10 @@ func main() {
 
     r.Get("/users/me", usersC.CurrentUser)
 
-    csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
-    csrfMw := csrf.Protect(
-        []byte(csrfKey),
-        csrf.Secure(false))
+	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+	csrfMw := csrf.Protect(
+		[]byte(csrfKey),
+		csrf.Secure(false))
 
     fmt.Println("Starting the server on :3000...")
     http.ListenAndServe(":3000", csrfMw(r))
