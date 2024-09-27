@@ -2,6 +2,7 @@ package views
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/Spartan09/lenslocked/context"
 	"github.com/Spartan09/lenslocked/models"
@@ -13,6 +14,10 @@ import (
 	"net/http"
 )
 
+type public interface {
+	Public() string
+}
+
 func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
 	htmlTpl := template.New(patterns[0])
 
@@ -22,6 +27,9 @@ func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
 		},
 		"currentUser": func() (*models.User, error) {
 			return nil, fmt.Errorf("currentUser not implemented")
+		},
+		"errors": func() []string {
+			return nil
 		},
 	})
 
@@ -46,7 +54,7 @@ type Template struct {
 	htmlTpl *template.Template
 }
 
-func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface{}) {
+func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface{}, errs ...error) {
 
 	tpl, err := t.htmlTpl.Clone()
 	if err != nil {
@@ -54,6 +62,7 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		http.Error(w, "There was an error rendering the page.", http.StatusInternalServerError)
 		return
 	}
+	errMsgs := errMessages(errs...)
 	tpl = tpl.Funcs(
 		template.FuncMap{
 			"csrfField": func() template.HTML {
@@ -61,6 +70,9 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 			},
 			"currentUser": func() *models.User {
 				return context.User(r.Context())
+			},
+			"errors": func() []string {
+				return errMsgs
 			},
 		},
 	)
@@ -74,4 +86,18 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		return
 	}
 	_, _ = io.Copy(w, &buf)
+}
+
+func errMessages(errs ...error) []string {
+	var msgs []string
+	for _, err := range errs {
+		var pubErr public
+		if errors.As(err, &pubErr) {
+			msgs = append(msgs, pubErr.Public())
+		} else {
+			fmt.Println(err)
+			msgs = append(msgs, "Something went wrong.")
+		}
+	}
+	return msgs
 }
