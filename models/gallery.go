@@ -2,8 +2,8 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
+	"github.com/Spartan09/lenslocked/errors"
 )
 
 type Gallery struct {
@@ -36,7 +36,7 @@ func (s *GalleryService) ByID(id int) (*Gallery, error) {
 		ID: id,
 	}
 	row := s.DB.QueryRow(`
-		SELECT id, title, user_id
+		SELECT title, user_id
 		FROM galleries
 		WHERE id = $1;`, gallery.ID)
 	err := row.Scan(&gallery.Title, &gallery.UserID)
