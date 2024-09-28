@@ -78,6 +78,9 @@ func main() {
 	pwResetService := &models.PasswordResetService{
 		DB: db,
 	}
+	galleryService := &models.GalleryService{
+		DB: db,
+	}
 	emailService := models.NewEmailService(cfg.SMTP)
 
 	// Middlewares
@@ -86,9 +89,10 @@ func main() {
 	}
 	csrfMw := csrf.Protect(
 		[]byte(cfg.CSRF.Key),
-		csrf.Secure(cfg.CSRF.Secure))
+		csrf.Secure(cfg.CSRF.Secure),
+		csrf.Path("/"))
 
-	// Controllers
+	// User Controllers
 	usersC := controllers.Users{
 		UserService:          userService,
 		SessionService:       sessionService,
@@ -107,6 +111,18 @@ func main() {
 		"reset-pw.gohtml", "tailwind.gohtml",
 	))
 
+	// Galleries Controllers
+	galleriesC := controllers.Galleries{
+		GalleryService: galleryService,
+	}
+	galleriesC.Templates.New = views.Must(views.ParseFS(
+		templates.FS,
+		"galleries/new.gohtml", "tailwind.gohtml",
+	))
+	galleriesC.Templates.Edit = views.Must(views.ParseFS(
+		templates.FS,
+		"galleries/edit.gohtml", "tailwind.gohtml",
+	))
 	// Router and routes
 	r := chi.NewRouter()
 	r.Use(csrfMw)
@@ -133,6 +149,16 @@ func main() {
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
+	})
+	r.Route("/galleries", func(r chi.Router) {
+		r.Group(func(r chi.Router) {
+			r.Use(umw.RequireUser)
+			r.Get("/", galleriesC.Index)
+			r.Get("/new", galleriesC.New)
+			r.Post("/", galleriesC.Create)
+			r.Get("/{id}/edit", galleriesC.Edit)
+			r.Post("/{id}", galleriesC.Update)
+		})
 	})
 
 	// Start server
