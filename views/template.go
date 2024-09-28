@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"path/filepath"
 )
 
 type public interface {
@@ -19,9 +20,9 @@ type public interface {
 }
 
 func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
-	htmlTpl := template.New(patterns[0])
+	tpl := template.New(filepath.Base(patterns[0]))
 
-	htmlTpl = htmlTpl.Funcs(template.FuncMap{
+	tpl = tpl.Funcs(template.FuncMap{
 		"csrfField": func() (template.HTML, error) {
 			return "", fmt.Errorf("csrfField not implemented")
 		},
@@ -33,13 +34,13 @@ func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
 		},
 	})
 
-	htmlTpl, err := htmlTpl.ParseFS(fs, patterns...)
+	tpl, err := tpl.ParseFS(fs, patterns...)
 	if err != nil {
 		return Template{}, fmt.Errorf("parsing template: %w", err)
 	}
 
 	return Template{
-		htmlTpl: htmlTpl,
+		htmlTpl: tpl,
 	}, nil
 }
 
