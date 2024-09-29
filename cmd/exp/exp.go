@@ -1,35 +1,38 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/Spartan09/lenslocked/models"
-	"github.com/joho/godotenv"
-	"log"
-	"os"
-	"strconv"
+	"io"
+	"net/http"
 )
 
 func main() {
-	err := godotenv.Load()
+	url := "https://api.thecatapi.com/v1/images/search?limit=10"
+	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		fmt.Printf("Error making request: %v", err)
+		return
 	}
-	host := os.Getenv("SMTP_HOST")
-	portStr := os.Getenv("SMTP_PORT")
-	port, err := strconv.Atoi(portStr)
-	username := os.Getenv("SMTP_USERNAME")
-	password := os.Getenv("SMTP_PASSWORD")
+	defer resp.Body.Close()
 
-	es := models.NewEmailService(models.SMTPConfig{
-		Host:     host,
-		Port:     port,
-		Username: username,
-		Password: password,
-	})
-
-	err = es.ForgotPassword("jon@calhoun.io", "https://lenslocked.com/reset-pw?token=abc123")
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error reading response body: %v\n", err)
+		return
 	}
-	fmt.Println("Email sent")
+
+	var catImagesJson []map[string]interface{}
+	if err := json.Unmarshal(body, &catImagesJson); err != nil {
+		fmt.Printf("Error unmarshalling response body: %v\n", err)
+		return
+	}
+
+	var catImages []string
+	for img := range catImagesJson {
+		catImages = append(catImages, catImagesJson[img]["url"].(string))
+	}
+
+	fmt.Println(catImages)
+
 }
