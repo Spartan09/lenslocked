@@ -205,7 +205,7 @@ func (g Galleries) galleryByID(w http.ResponseWriter, r *http.Request, opts ...g
 }
 
 func (g Galleries) Image(w http.ResponseWriter, r *http.Request) {
-	filename := chi.URLParam(r, "filename")
+	filename := g.filename(w, r)
 	galleryID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		http.Error(w, "Invalid ID", http.StatusNotFound)
