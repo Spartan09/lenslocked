@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Spartan09/lenslocked/errors"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -44,6 +45,26 @@ func (s *GalleryService) Create(title string, userID int) (*Gallery, error) {
 		return nil, fmt.Errorf("create gallery: %w", err)
 	}
 	return &gallery, nil
+}
+
+func (s *GalleryService) CreateImage(galleryID int, filename string, contents io.Reader) error {
+	galleryDir := s.galleryDir(galleryID)
+	err := os.MkdirAll(galleryDir, 0755)
+	if err != nil {
+		return fmt.Errorf("creating gallery-%d images directory: %w", galleryID, err)
+	}
+	imagePath := filepath.Join(galleryDir, filename)
+	dst, err := os.Create(imagePath)
+	if err != nil {
+		return fmt.Errorf("creating image file: %w", err)
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, contents)
+	if err != nil {
+		return fmt.Errorf("copying contents to image: %w", err)
+	}
+	return nil
 }
 
 func (s *GalleryService) ByID(id int) (*Gallery, error) {
