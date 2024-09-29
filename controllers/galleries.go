@@ -5,9 +5,10 @@ import (
 	"github.com/Spartan09/lenslocked/context"
 	"github.com/Spartan09/lenslocked/errors"
 	"github.com/Spartan09/lenslocked/models"
-	"github.com/Spartan09/lenslocked/services"
 	"github.com/go-chi/chi/v5"
 	"net/http"
+	"net/url"
+	"path/filepath"
 	"strconv"
 )
 
@@ -51,12 +52,30 @@ func (g Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	data := struct {
-		ID    int
-		Title string
-	}{
-		ID:    gallery.ID,
-		Title: gallery.Title,
+	type Image struct {
+		GalleryID       int
+		Filename        string
+		FilenameEscaped string
+	}
+	var data struct {
+		ID     int
+		Title  string
+		Images []Image
+	}
+	data.ID = gallery.ID
+	data.Title = gallery.Title
+	images, err := g.GalleryService.Images(gallery.ID)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+	for _, image := range images {
+		data.Images = append(data.Images, Image{
+			GalleryID:       image.GalleryID,
+			Filename:        image.Filename,
+			FilenameEscaped: url.PathEscape(image.Filename),
+		})
 	}
 	g.Templates.Edit.Execute(w, r, data)
 }
