@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Spartan09/lenslocked/errors"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -15,7 +17,9 @@ type Gallery struct {
 }
 
 type Image struct {
-	Path string
+	GalleryID int
+	Path      string
+	Filename  string
 }
 
 type GalleryService struct {
@@ -124,11 +128,29 @@ func (s *GalleryService) Images(galleryID int) ([]Image, error) {
 	for _, file := range allFiles {
 		if hasExtension(file, s.extensions()) {
 			images = append(images, Image{
-				Path: file,
+				GalleryID: galleryID,
+				Path:      file,
+				Filename:  filepath.Base(file),
 			})
 		}
 	}
 	return images, nil
+}
+
+func (s *GalleryService) Image(galleryID int, filename string) (Image, error) {
+	imagePath := filepath.Join(s.galleryDir(galleryID), filename)
+	_, err := os.Stat(imagePath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return Image{}, ErrNotFound
+		}
+		return Image{}, fmt.Errorf("querying for image: %w", err)
+	}
+	return Image{
+		Filename:  filename,
+		GalleryID: galleryID,
+		Path:      imagePath,
+	}, nil
 }
 
 func (s *GalleryService) extensions() []string {
