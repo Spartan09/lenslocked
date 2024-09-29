@@ -123,6 +123,15 @@ func main() {
 		templates.FS,
 		"galleries/edit.gohtml", "tailwind.gohtml",
 	))
+	galleriesC.Templates.Index = views.Must(views.ParseFS(
+		templates.FS,
+		"galleries/index.gohtml", "tailwind.gohtml",
+	))
+	galleriesC.Templates.Show = views.Must(views.ParseFS(
+		templates.FS,
+		"galleries/show.gohtml", "tailwind.gohtml",
+	))
+
 	// Router and routes
 	r := chi.NewRouter()
 	r.Use(csrfMw)
@@ -151,6 +160,7 @@ func main() {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
 	r.Route("/galleries", func(r chi.Router) {
+		r.Get("/{id}", galleriesC.Show)
 		r.Group(func(r chi.Router) {
 			r.Use(umw.RequireUser)
 			r.Get("/", galleriesC.Index)
