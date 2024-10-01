@@ -63,22 +63,17 @@ func loadEnvConfig() (config, error) {
 	return cfg, nil
 }
 
-func main() {
-	// Set up connections and handle migrations
-	cfg, err := loadEnvConfig()
-	if err != nil {
-		panic(err)
-	}
+func run(cfg config) error {
 	db, err := models.Open(cfg.PSQL)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	defer db.Close()
 
 	err = models.MigrateFS(db, migrations.FS, ".")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// Services
@@ -162,10 +157,6 @@ func main() {
 	r.Post("/signout", usersC.ProcessSignOut)
 	r.Get("/forgot-pw", usersC.ForgotPassword)
 	r.Post("/forgot-pw", usersC.ProcessForgotPassword)
-	r.Route("/users/me", func(r chi.Router) {
-		r.Use(umw.RequireUser)
-		r.Get("/", usersC.CurrentUser)
-	})
 	r.Get("/reset-pw", usersC.ResetPassword)
 	r.Post("/reset-pw", usersC.ProcessResetPassword)
 
@@ -188,11 +179,21 @@ func main() {
 		})
 	})
 
+	assetsHandler := http.FileServer(http.Dir("assets"))
+	r.Get("/assets/*", http.StripPrefix("/assets", assetsHandler).ServeHTTP)
+
 	// Start server
 	fmt.Printf("Starting the server on %s...\n", cfg.Server.Address)
-	err = http.ListenAndServe(cfg.Server.Address, r)
+	return http.ListenAndServe(cfg.Server.Address, r)
+}
+
+func main() {
+	cfg, err := loadEnvConfig()
 	if err != nil {
 		panic(err)
 	}
-
+	err = run(cfg)
+	if err != nil {
+		panic(err)
+	}
 }
