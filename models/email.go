@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	DefaultSender = "support@lenslocked.com"
+	DefaultSender = "support@singhstack.dev"
 )
 
 type EmailService struct {
@@ -64,15 +64,17 @@ func (es *EmailService) ForgotPassword(to, resetURL string) error {
 }
 
 type SMTPConfig struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
+	Host          string
+	Port          int
+	Username      string
+	Password      string
+	DefaultSender string
 }
 
 func NewEmailService(config SMTPConfig) *EmailService {
 	es := EmailService{
-		dialer: mail.NewDialer(config.Host, config.Port, config.Username, config.Password),
+		DefaultSender: config.DefaultSender,
+		dialer:        mail.NewDialer(config.Host, config.Port, config.Username, config.Password),
 	}
 	return &es
 }
