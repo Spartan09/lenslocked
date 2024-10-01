@@ -7,6 +7,7 @@ import (
 	"github.com/Spartan09/lenslocked/models"
 	"net/http"
 	"net/url"
+	"os"
 )
 
 type Users struct {
@@ -178,7 +179,7 @@ func (u Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
 		"token": {pwReset.Token},
 	}
 	// TODO: Make the URL here configurable
-	resetURL := "https://www.lenslocked.com/reset-pw?" + vals.Encode()
+	resetURL := "https://" + os.Getenv("APP_DOMAIN") + "/reset-pw?" + vals.Encode()
 	err = u.EmailService.ForgotPassword(data.Email, resetURL)
 	if err != nil {
 		fmt.Println(err)
